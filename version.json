@@ -1,5 +1,8 @@
 {
     "CurrentVersion": "0.0.1",
+    "Changes": [
+        "Initial release with basic functionality."
+    ],
     "VersionHistory": [
         {
             "Version": "0.0.1",
