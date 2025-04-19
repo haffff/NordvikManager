@@ -1,0 +1,106 @@
+name: Release Workflow
+
+on:
+  push:
+    branches:
+    - main
+  #For now we are using this workflow for testing purposes
+  workflow_dispatch:
+
+jobs:
+  build_frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout NordvikManager FrontEnd repository
+        uses: actions/checkout
+        with:
+          repository: haffff/NordvikManagerFrontend
+          path: frontend
+      - name: Checkout NordvikManager Configuration
+        uses: actions/checkout
+        with:
+          path: config
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+      - name: get env file
+        run: |
+          mv /config/releaseconfig/all_in_one/client/.env .env
+      - name: Install dependencies
+        run: |
+          cd /frontend
+          npm ci --legacy-peer-deps
+      - run: |
+          cd /frontend
+          npm run buildci --if-present
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: front-build
+          path: /frontend/build
+  build_backend:
+      runs-on: ubuntu-latest
+      steps:
+      - name: Checkout NordvikManager Backend repository
+        uses: actions/checkout
+        with: 
+          repository: haffff/NordvikManagerBackend
+          path: backend
+      - name: Checkout NordvikManager Configuration
+        uses: actions/checkout
+        with:
+          path: config
+      - name: Install Frontend
+        uses: actions/download-artifact@v4
+        with:
+          name: front-build
+          path: backend/DNDOnePlaceManager/wwwroot
+      - name: Install dependencies
+        run: dotnet restore backend/DNDOnePlaceManager.sln
+      - name: Build
+        run: dotnet publish backend/DNDOnePlaceManager.sln -c Release -o ./build
+      - name: Move config files
+        run: cp -r config/releaseconfig/all_in_one/server/* ./build/
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-build
+          path: ./build
+  release:
+      runs-on: ubuntu-latest
+      needs: [build_frontend, build_backend]
+      steps:
+        - name: Checkout NordvikManager Configuration
+          uses: actions/checkout
+          with:
+            path: config
+        - name: Set release version number and latest changes
+          run: |
+              export CURRENT_VERSION=$(jq -r '.CurrentVersion' config/version.json)
+              echo "Current Version: $CURRENT_VERSION"
+              echo "CURRENT_VERSION=$CURRENT_VERSION" >> $GITHUB_ENV
+              export LATEST_CHANGES=$(jq -r '.LatestChanges | join("\n - ")' config/version.json)
+              echo "Latest Changes: $LATEST_CHANGES"
+        - name: Download app-build
+          uses: actions/download-artifact@v4
+          with:
+            name: app-build
+            path: ./build
+        - name: Create Zip file
+          run: |
+            cd build
+            zip -r ../NordvikManager_$CURRENT_VERSION.zip *
+            cd ..
+        - uses: "marvinpinto/action-automatic-releases@latest"
+          with:
+            repo_token: "${{ secrets.GITHUB_TOKEN }}"
+            automatic_release_tag: "latest"
+            draft: true
+            title: "Release $CURRENT_VERSION"
+            body: |
+              ## Release $CURRENT_VERSION
+              ### Latest Changes
+              $LATEST_CHANGES
+            files: |
+              NordvikManager_$CURRENT_VERSION.zip
