@@ -1,0 +1,12 @@
+{
+    "CurrentVersion": "0.0.1",
+    "VersionHistory": [
+        {
+            "Version": "0.0.1",
+            "Date": "2025-04-19",
+            "Changes": [
+                "Initial release with basic functionality."
+            ]
+        }
+    ]
+}
