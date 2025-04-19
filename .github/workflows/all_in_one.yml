@@ -1,11 +1,11 @@
 name: Release Workflow
 
 on:
+  #For now we are using this workflow for testing purposes
+  workflow_dispatch:
   push:
     branches:
       - main
-  #For now we are using this workflow for testing purposes
-  workflow_dispatch:
 
 jobs:
   build_frontend:
