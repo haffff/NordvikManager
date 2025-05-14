@@ -59,7 +59,7 @@ jobs:
       - name: Build Windows
         run: dotnet publish backend/DNDOnePlaceManager.sln -c Release -o ./build_win64 -r win-x64 --self-contained
       - name: Build Linux
-        run: dotnet publish backend/DNDOnePlaceManager.sln -c Release -o ./build_linux -r linux --self-contained
+        run: dotnet publish backend/DNDOnePlaceManager.sln -c Release -o ./build_linux --self-contained
       - name: Move config files
         run: |
           cp -r config/releaseconfig/all_in_one/server/* ./build_win64/
