@@ -96,9 +96,5 @@ jobs:
             automatic_release_tag: "latest"
             draft: true
             title: "Release $CURRENT_VERSION"
-            body: |
-              ## Release $CURRENT_VERSION
-              ### Latest Changes
-              $LATEST_CHANGES
             files: |
               NordvikManager_$CURRENT_VERSION.zip
