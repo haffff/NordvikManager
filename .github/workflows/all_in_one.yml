@@ -1,8 +1,6 @@
 name: Release Workflow
 
 on:
-  #For now we are using this workflow for testing purposes
-  workflow_dispatch:
   push:
     branches:
       - main
@@ -31,6 +29,7 @@ jobs:
         run: |
           cd frontend
           npm ci --legacy-peer-deps
+          npm run buildci --if-present
           cd ..
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
