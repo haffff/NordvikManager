@@ -45,7 +45,7 @@ jobs:
       - name: Checkout NordvikManager Backend repository
         uses: actions/checkout@v4
         with: 
-          repository: haffff/NordvikManagerBackend
+          repository: haffff/NordvikManager-Backend
           path: backend
       - name: Checkout NordvikManager Configuration
         uses: actions/checkout@v4
