@@ -1,9 +1,7 @@
 {
     "CurrentVersion": "0.0.1",
-    "LatestChanges": [
-        "Initial release with basic functionality.",
-        "Added support for multiple languages.",
-        "Improved performance and reduced memory usage."
+    "Changes": [
+        "Initial release with basic functionality."
     ],
     "VersionHistory": [
         {

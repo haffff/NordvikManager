@@ -16,3 +16,16 @@ This section is in progress...
 ## Installation
 
 Feel free to download release [here](?)
+
+## See also
+
+[Nordvik Manager Frontend Repository](https://github.com/haffff/NordvikManagerFrontEnd)
+
+[Nordvik Manager Backend Repository](https://github.com/haffff/NordvikManager-BackEnd)
+
+
+[Addons repository](https://github.com/haffff/NordvikManager-Addons)
+
+My addons:
+
+[DND 5e repository (W.I.P.)](https://github.com/haffff/NordvikManager-DND)
