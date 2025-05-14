@@ -21,7 +21,7 @@ Feel free to download release [here](?)
 
 [Nordvik Manager Frontend Repository](https://github.com/haffff/NordvikManagerFrontEnd)
 
-[Nordvik Manager Backend Repository](https://github.com/haffff/NordvikManagerBackEnd)
+[Nordvik Manager Backend Repository](https://github.com/haffff/NordvikManager-BackEnd)
 
 
 [Addons repository](https://github.com/haffff/NordvikManager-Addons)
