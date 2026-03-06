@@ -122,5 +122,5 @@ jobs:
             automatic_release_tag: "v${{ env.CURRENT_VERSION }}"
             title: "Release $CURRENT_VERSION"
             files: |
-              NordvikManager_$CURRENT_VERSION_Windows.zip
-              NordvikManager_$CURRENT_VERSION_Linux.zip
+              NordvikManager_${{ env.CURRENT_VERSION }}_Windows.zip
+              NordvikManager_${{ env.CURRENT_VERSION }}_Linux.zip
