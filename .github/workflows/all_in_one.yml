@@ -101,7 +101,7 @@ jobs:
         - name: Create Windows Zip file
           run: |
             cd win64-build
-            zip -r ../NordvikManager_$CURRENT_VERSION_Windows.zip *
+            zip -r ../NordvikManager_${{ env.CURRENT_VERSION }}_Windows.zip *
             cd ..
         
         - name: Download linux-build
@@ -112,7 +112,7 @@ jobs:
         - name: Create Linux Zip file
           run: |
             cd linux-build
-            zip -r ../NordvikManager_$CURRENT_VERSION_Linux.zip *
+            zip -r ../NordvikManager_${{ env.CURRENT_VERSION }}_Linux.zip *
             cd ..
         - uses: marvinpinto/action-automatic-releases@latest
           with:
