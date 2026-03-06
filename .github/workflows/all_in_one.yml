@@ -78,6 +78,8 @@ jobs:
           path: ./build_linux
   release:
       runs-on: ubuntu-latest
+      permissions:
+        contents: write
       needs: [build_frontend, build_backend]
       steps:
         - name: Checkout NordvikManager Configuration
@@ -115,7 +117,7 @@ jobs:
         - uses: marvinpinto/action-automatic-releases@latest
           with:
             repo_token: "${{ secrets.GITHUB_TOKEN }}"
-            automatic_release_tag: "v$CURRENT_VERSION"
+            automatic_release_tag: "v${{ env.CURRENT_VERSION }}"
             title: "Release $CURRENT_VERSION"
             files: |
               NordvikManager_$CURRENT_VERSION_Windows.zip
