@@ -107,7 +107,7 @@ jobs:
           with:
             name: linux-build
             path: ./linux-build
-        - name: Create Windows Zip file
+        - name: Create Linux Zip file
           run: |
             cd linux-build
             zip -r ../NordvikManager_$CURRENT_VERSION_Linux.zip *
@@ -115,6 +115,7 @@ jobs:
         - uses: marvinpinto/action-automatic-releases@latest
           with:
             repo_token: "${{ secrets.GITHUB_TOKEN }}"
+            automatic_release_tag: "v$CURRENT_VERSION"
             title: "Release $CURRENT_VERSION"
             files: |
               NordvikManager_$CURRENT_VERSION_Windows.zip
