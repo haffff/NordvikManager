@@ -12,9 +12,9 @@ on:
           - release
           - dev
     
-  push:
-    branches:
-      - main
+  # push:
+  #   branches:
+  #     - main
 
 jobs:
   build_frontend:
