@@ -32,7 +32,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: haffff/NordvikManagerFrontend
-          ref: ${{ github.event.inputs.build_type == 'dev' && 'dev' || 'main' }}
+          ref: ${{ github.event.inputs.build_type == 'dev' && 'development' || 'main' }}
           path: frontend
       - name: Checkout NordvikManager Configuration
         uses: actions/checkout@v4
