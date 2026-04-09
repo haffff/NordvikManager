@@ -20,10 +20,9 @@ on:
           - auto
           - standard
           - all
-    
-  push:
-    branches:
-      - main
+  # push:
+  #   branches:
+  #     - main
 
 jobs:
   build_frontend:
