@@ -1,1 +1,17 @@
 my-credentials
+
+# build/orchestration output
+node_modules/
+artifacts/
+
+# independent sibling repos, cloned via `pnpm run repos:clone` (see repos.json)
+/NordvikManager-Addons/
+/NordvikManager-Backend/
+/NordvikManager-Central/
+/NordvikManagerCards/
+/NordvikManagerFrontEnd/
+/react-dockable-expanded/
+
+# addon repos, cloned via `pnpm run addons:clone` (see NordvikManager-Addons/addons.json)
+/addons/
+.github/copilot-instructions.md
