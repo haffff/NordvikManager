@@ -1,7 +1,7 @@
 [
   { "name": "NordvikManager-Addons", "path": "NordvikManager-Addons", "url": "https://github.com/haffff/NordvikManager-Addons.git" },
   { "name": "NordvikManager-Backend", "path": "NordvikManager-Backend", "url": "https://github.com/haffff/NordvikManager-Backend.git" },
-  { "name": "NordvikManager-Central", "path": "NordvikManager-Central", "url": null, "note": "local-only repo, no remote configured - cannot be cloned automatically" },
+  { "name": "NordvikManager-Central", "path": "NordvikManager-Central", "url": "https://github.com/haffff/NordvikManager-Central.git" },
   { "name": "NordvikManagerFrontEnd", "path": "NordvikManagerFrontEnd", "url": "https://github.com/haffff/NordvikManagerFrontEnd.git" },
   { "name": "react-dockable-expanded", "path": "react-dockable-expanded", "url": "https://github.com/haffff/react-dockable-expanded.git", "upstream": "https://github.com/hlorenzi/react-dockable.git" }
 ]
