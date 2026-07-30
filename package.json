@@ -1,0 +1,15 @@
+{
+  "name": "nordvikmanager",
+  "private": true,
+  "version": "1.0.0",
+  "packageManager": "pnpm@10.33.0",
+  "scripts": {
+    "dev": "concurrently -n central,player,gm,backend -c blue,green,yellow,magenta \"pnpm --dir NordvikManager-Central run dev\" \"pnpm --dir NordvikManagerFrontEnd run start_player\" \"pnpm --dir NordvikManagerFrontEnd run start_gm\" \"dotnet run --project NordvikManager-Backend/DNDOnePlaceManager\"",
+    "build:release": "node scripts/build-release.mjs",
+    "repos:clone": "node scripts/clone-repos.mjs",
+    "addons:clone": "node scripts/clone-addons.mjs"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0"
+  }
+}
