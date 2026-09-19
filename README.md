@@ -68,6 +68,21 @@ sequenceDiagram
     B-->>U: api-response
 ```
 
+## Development setup
+
+This repo is a workspace manager for the whole stack — it doesn't contain application code itself, just `repos.json`/`NordvikManager-Addons/addons.json` manifests and scripts (in `scripts/`) to clone, install, and run every component together.
+
+```bash
+pnpm install
+pnpm run repos:clone    # clones Frontend, Backend, Central, etc. from repos.json next to this repo (skips ones already present)
+pnpm run addons:clone   # clones every addon repo listed in NordvikManager-Addons/addons.json into addons/<key>
+                         # pass a key to clone just one, e.g. `pnpm run addons:clone -- dnd5e`
+pnpm run install-all    # installs dependencies for every cloned repo — pnpm/npm/dotnet, auto-detected per repo
+pnpm run dev            # runs Central, Backend, and the Frontend (both GM and Player mode) concurrently
+```
+
+`pnpm run dev` is the fastest way to get the full stack running locally — it's `concurrently` wired to `pnpm --dir NordvikManager-Central run dev`, `pnpm --dir NordvikManagerFrontEnd run start_player`, `pnpm --dir NordvikManagerFrontEnd run start_gm`, and `dotnet run --project NordvikManager-Backend/DNDOnePlaceManager` — see `package.json` for the exact command. Each sub-repo's own README covers running it standalone (useful when you only need to iterate on one component).
+
 ## Installation
 
 Feel free to download release [here](?)
