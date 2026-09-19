@@ -13,6 +13,61 @@ Nordvik Manager is an open source Virtual Table Top software that is aiming to i
 
 This section is in progress...
 
+## Architecture
+
+Nordvik Manager is split across three repositories that talk to each other over WebRTC (game data) and Socket.IO (signaling only):
+
+- **[Frontend](https://github.com/haffff/NordvikManagerFrontEnd)** — React SPA (Vite). One codebase serves both the GM and Player roles.
+- **[Backend](https://github.com/haffff/NordvikManager-Backend)** ("GM Local Server") — .NET 8, Clean Architecture + CQRS. Runs on the GM's own machine and owns the actual game state (SQLite/PostgreSQL). It never listens for inbound connections directly from players — see below.
+- **[Central](https://github.com/haffff/NordvikManager-Central)** — Node.js/Express server, hosted centrally. Handles account auth (JWT) and relays WebRTC signaling between browsers and the GM's Backend. It never sees game data — it's a pure relay plus a session/user registry (SQLite).
+
+```mermaid
+flowchart LR
+    subgraph Browser["Browser (GM or Player)"]
+        FE["Frontend SPA\n(React + Vite)"]
+    end
+
+    subgraph Hosted["Central Server (hosted)"]
+        Central["Central\nNode.js / Express"]
+        CentralDB[("SQLite\nusers, sessions")]
+        Central --- CentralDB
+    end
+
+    subgraph GMHost["GM's machine"]
+        Backend["Backend\n.NET 8, Clean Architecture + CQRS"]
+        BackendDB[("SQLite / PostgreSQL\ngame state")]
+        Backend --- BackendDB
+    end
+
+    FE -- "1. HTTPS: login / refresh token" --> Central
+    FE -- "2. Socket.IO: WebRTC signaling" --> Central
+    Backend -- "3. Socket.IO client (role=gm):\nWebRTC signaling" --> Central
+    FE == "4. RTCPeerConnection data channel\n(REST-over-WebRTC + live game events)" ==> Backend
+```
+
+Once the data channel is open, all in-game traffic (REST calls, token moves, chat, map switches) flows directly peer-to-peer between the browser and the GM's Backend — Central is only involved in steps 1-3:
+
+```mermaid
+sequenceDiagram
+    participant U as Browser (GM or Player)
+    participant C as Central
+    participant B as Backend (GM's machine)
+
+    U->>C: POST /api/user/login (HTTPS)
+    C-->>U: JWT access + refresh (cookies)
+    B->>C: connect Socket.IO, authenticate {role: "gm"}
+    U->>C: connect Socket.IO, authenticate {role, sessionId}
+    C-->>U: peer-joined (gmPeerId)
+    U->>C: webrtc-offer
+    C->>B: relay offer
+    B->>C: webrtc-answer
+    C->>U: relay answer
+    U-->>B: ICE candidates (relayed via C)
+    Note over U,B: RTCPeerConnection data channel "game" opens (P2P)
+    U->>B: api-request (REST-over-WebRTC)
+    B-->>U: api-response
+```
+
 ## Installation
 
 Feel free to download release [here](?)
@@ -21,8 +76,9 @@ Feel free to download release [here](?)
 
 [Nordvik Manager Frontend Repository](https://github.com/haffff/NordvikManagerFrontEnd)
 
-[Nordvik Manager Backend Repository](https://github.com/haffff/NordvikManager-BackEnd)
+[Nordvik Manager Backend Repository](https://github.com/haffff/NordvikManager-Backend)
 
+[Nordvik Manager Central Repository](https://github.com/haffff/NordvikManager-Central)
 
 [Addons repository](https://github.com/haffff/NordvikManager-Addons)
 

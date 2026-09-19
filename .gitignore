@@ -11,6 +11,7 @@ artifacts/
 /NordvikManagerCards/
 /NordvikManagerFrontEnd/
 /react-dockable-expanded/
+/NordvikManagerRoll20Compat/
 
 # addon repos, cloned via `pnpm run addons:clone` (see NordvikManager-Addons/addons.json)
 /addons/
