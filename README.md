@@ -13,6 +13,30 @@ Nordvik Manager is an open source Virtual Table Top software that is aiming to i
 
 This section is in progress...
 
+---
+
+# For Players
+
+You don't need to install anything to join a game — only the GM running the session does.
+
+- **Joining a game (Player):** open [nordvikmanager.pl/client](https://nordvikmanager.pl/client) in your browser. It always serves the newest released frontend build and connects you to whichever GM's session you've been invited to.
+- **Running a game (GM):** GMs install and run the Backend application locally (see [Installation](#installation) below), then access it through `localhost` in their browser to create and manage the session — players then join remotely through `nordvikmanager.pl/client` without installing anything themselves.
+- **Quick start guide:** [nordvikmanager.pl/quickstart](https://nordvikmanager.pl/quickstart) — walks GMs through installing the app and setting up their first session.
+- **User guide:** [nordvikmanager.pl/user-guide](https://nordvikmanager.pl/user-guide) — full documentation for Players and GMs.
+
+## Installation
+
+Feel free to download release [here](https://github.com/haffff/NordvikManager/releases)
+
+---
+
+# For GMs / Developers
+
+More technical details on how the application is put together — useful if you're self-hosting, contributing, or building an addon.
+
+- **Documentation:** [nordvikmanager.pl/documentation](https://nordvikmanager.pl/documentation)
+- **Addon development guide:** [nordvikmanager.pl/addon-guide](https://nordvikmanager.pl/addon-guide)
+
 ## Architecture
 
 Nordvik Manager is split across three repositories that talk to each other over WebRTC (game data) and Socket.IO (signaling only):
@@ -82,10 +106,6 @@ pnpm run dev            # runs Central, Backend, and the Frontend (both GM and P
 ```
 
 `pnpm run dev` is the fastest way to get the full stack running locally — it's `concurrently` wired to `pnpm --dir NordvikManager-Central run dev`, `pnpm --dir NordvikManagerFrontEnd run start_player`, `pnpm --dir NordvikManagerFrontEnd run start_gm`, and `dotnet run --project NordvikManager-Backend/DNDOnePlaceManager` — see `package.json` for the exact command. Each sub-repo's own README covers running it standalone (useful when you only need to iterate on one component).
-
-## Installation
-
-Feel free to download release [here](?)
 
 ## See also
 
