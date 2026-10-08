@@ -11,18 +11,121 @@ Nordvik Manager is an open source Virtual Table Top software that is aiming to i
 
 ## Features
 
-This section is in progress...
+Everything runs in the browser; players install nothing, the GM runs the Backend on their own machine.
+
+- **Dockable workspace** — every tool is a panel you can dock, float and arrange; layouts can be saved and shared.
+- **Battle maps** — several maps per game, a grid you can resize and recolour on the map (drawn fast even on big maps), measuring tools, and custom layers above or below the tokens. A layer can be **GM only** (players don't see it, the GM sees it faded) or **hidden** (nobody sees it until it's shown).
+- **Tokens** — from cards or card-less, with bars, status icons and a quick-edit panel. Bars and other parts can be shown, hidden or made GM-only per map or per token.
+- **Turn order** — one per map: tokens and free entries, initiative and sorting, rounds, hidden entries, and players can end their own turn.
+- **Cards and templates** — character sheets, items, notes and anything else as cards made from addon templates (sandboxed HTML/JS), with per-player permissions. The built-in **Basics** addon adds a rich-text Note and a generic token.
+- **Chat** with dice rolls and chat commands.
+- **Music and sound** — playlists and soundboards played to everyone in sync. The GM sets the volume per playlist, soundboard and sound file; each player sets their own volume for music, sound effects and notifications. Music fades in and out.
+- **Resources** — upload files, or link files on the GM's disk without copying them; players' browsers keep an offline cache.
+- **Actions** — automate the game with hooks (e.g. "Turn Changed") and steps (play music, move tokens, update cards, run sandboxed scripts…), without writing an addon.
+- **Addons and themes** — install game-system addons and themes; restyle a game with your own CSS (one accent colour for every highlight).
+- **Permissions** — per player and per item (maps, layers, tokens, cards…).
+
+---
+
+# For Players
+
+You don't need to install anything to join a game — only the GM running the session does.
+
+- **Joining a game (Player):** open [nordvikmanager.pl/client](https://nordvikmanager.pl/client) in your browser. It always serves the newest released frontend build and connects you to whichever GM's session you've been invited to.
+- **Running a game (GM):** GMs install and run the Backend application locally (see [Installation](#installation) below), then access it through `localhost` in their browser to create and manage the session — players then join remotely through `nordvikmanager.pl/client` without installing anything themselves.
+- **Quick start guide:** [nordvikmanager.pl/quickstart](https://nordvikmanager.pl/quickstart) — walks GMs through installing the app and setting up their first session.
+- **User guide:** [nordvikmanager.pl/user-guide](https://nordvikmanager.pl/user-guide) — full documentation for Players and GMs.
 
 ## Installation
 
-Feel free to download release [here](?)
+Feel free to download release [here](https://github.com/haffff/NordvikManager/releases)
+
+---
+
+# For GMs / Developers
+
+More technical details on how the application is put together — useful if you're self-hosting, contributing, or building an addon.
+
+- **Documentation:** [nordvikmanager.pl/documentation](https://nordvikmanager.pl/documentation)
+- **Addon development guide:** [nordvikmanager.pl/addon-guide](https://nordvikmanager.pl/addon-guide)
+
+## Architecture
+
+Nordvik Manager is split across three repositories that talk to each other over WebRTC (game data) and Socket.IO (signaling only):
+
+- **[Frontend](https://github.com/haffff/NordvikManagerFrontEnd)** — React SPA (Vite). One codebase serves both the GM and Player roles.
+- **[Backend](https://github.com/haffff/NordvikManager-Backend)** ("GM Local Server") — .NET 10, Clean Architecture + CQRS. Runs on the GM's own machine and owns the actual game state (SQLite by default, MySQL optional). It never listens for inbound connections directly from players — see below.
+- **[Central](https://github.com/haffff/NordvikManager-Central)** — Node.js/Express server, hosted centrally. Handles account auth (JWT) and relays WebRTC signaling between browsers and the GM's Backend. It never sees game data — it's a pure relay plus a session/user registry (SQLite).
+
+```mermaid
+flowchart LR
+    subgraph Browser["Browser (GM or Player)"]
+        FE["Frontend SPA\n(React + Vite)"]
+    end
+
+    subgraph Hosted["Central Server (hosted)"]
+        Central["Central\nNode.js / Express"]
+        CentralDB[("SQLite\nusers, sessions")]
+        Central --- CentralDB
+    end
+
+    subgraph GMHost["GM's machine"]
+        Backend["Backend\n.NET 10, Clean Architecture + CQRS"]
+        BackendDB[("SQLite / MySQL\ngame state")]
+        Backend --- BackendDB
+    end
+
+    FE -- "1. HTTPS: login / refresh token" --> Central
+    FE -- "2. Socket.IO: WebRTC signaling" --> Central
+    Backend -- "3. Socket.IO client (role=gm):\nWebRTC signaling" --> Central
+    FE == "4. RTCPeerConnection data channel\n(REST-over-WebRTC + live game events)" ==> Backend
+```
+
+Once the data channel is open, all in-game traffic (REST calls, token moves, chat, map switches) flows directly peer-to-peer between the browser and the GM's Backend — Central is only involved in steps 1-3:
+
+```mermaid
+sequenceDiagram
+    participant U as Browser (GM or Player)
+    participant C as Central
+    participant B as Backend (GM's machine)
+
+    U->>C: POST /api/user/login (HTTPS)
+    C-->>U: JWT access + refresh (cookies)
+    B->>C: connect Socket.IO, authenticate {role: "gm"}
+    U->>C: connect Socket.IO, authenticate {role, sessionId}
+    C-->>U: peer-joined (gmPeerId)
+    U->>C: webrtc-offer
+    C->>B: relay offer
+    B->>C: webrtc-answer
+    C->>U: relay answer
+    U-->>B: ICE candidates (relayed via C)
+    Note over U,B: RTCPeerConnection data channel "game" opens (P2P)
+    U->>B: api-request (REST-over-WebRTC)
+    B-->>U: api-response
+```
+
+## Development setup
+
+This repo is a workspace manager for the whole stack — it doesn't contain application code itself, just `repos.json`/`NordvikManager-Addons/addons.json` manifests and scripts (in `scripts/`) to clone, install, and run every component together.
+
+```bash
+pnpm install
+pnpm run repos:clone    # clones Frontend, Backend, Central, etc. from repos.json next to this repo (skips ones already present)
+pnpm run addons:clone   # clones every addon repo listed in NordvikManager-Addons/addons.json into addons/<key>
+                         # pass a key to clone just one, e.g. `pnpm run addons:clone -- dnd5e`
+pnpm run install-all    # installs dependencies for every cloned repo — pnpm/npm/dotnet, auto-detected per repo
+pnpm run dev            # runs Central, Backend, and the Frontend (both GM and Player mode) concurrently
+```
+
+`pnpm run dev` is the fastest way to get the full stack running locally — it's `concurrently` wired to `pnpm --dir NordvikManager-Central run dev`, `pnpm --dir NordvikManagerFrontEnd run start_player`, `pnpm --dir NordvikManagerFrontEnd run start_gm`, and `dotnet run --project NordvikManager-Backend/DNDOnePlaceManager` — see `package.json` for the exact command. Each sub-repo's own README covers running it standalone (useful when you only need to iterate on one component).
 
 ## See also
 
 [Nordvik Manager Frontend Repository](https://github.com/haffff/NordvikManagerFrontEnd)
 
-[Nordvik Manager Backend Repository](https://github.com/haffff/NordvikManager-BackEnd)
+[Nordvik Manager Backend Repository](https://github.com/haffff/NordvikManager-Backend)
 
+[Nordvik Manager Central Repository](https://github.com/haffff/NordvikManager-Central)
 
 [Addons repository](https://github.com/haffff/NordvikManager-Addons)
 
