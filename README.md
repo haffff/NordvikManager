@@ -11,7 +11,19 @@ Nordvik Manager is an open source Virtual Table Top software that is aiming to i
 
 ## Features
 
-This section is in progress...
+Everything runs in the browser; players install nothing, the GM runs the Backend on their own machine.
+
+- **Dockable workspace** — every tool is a panel you can dock, float and arrange; layouts can be saved and shared.
+- **Battle maps** — several maps per game, a grid you can resize and recolour on the map (drawn fast even on big maps), measuring tools, and custom layers above or below the tokens. A layer can be **GM only** (players don't see it, the GM sees it faded) or **hidden** (nobody sees it until it's shown).
+- **Tokens** — from cards or card-less, with bars, status icons and a quick-edit panel. Bars and other parts can be shown, hidden or made GM-only per map or per token.
+- **Turn order** — one per map: tokens and free entries, initiative and sorting, rounds, hidden entries, and players can end their own turn.
+- **Cards and templates** — character sheets, items, notes and anything else as cards made from addon templates (sandboxed HTML/JS), with per-player permissions. The built-in **Basics** addon adds a rich-text Note and a generic token.
+- **Chat** with dice rolls and chat commands.
+- **Music and sound** — playlists and soundboards played to everyone in sync. The GM sets the volume per playlist, soundboard and sound file; each player sets their own volume for music, sound effects and notifications. Music fades in and out.
+- **Resources** — upload files, or link files on the GM's disk without copying them; players' browsers keep an offline cache.
+- **Actions** — automate the game with hooks (e.g. "Turn Changed") and steps (play music, move tokens, update cards, run sandboxed scripts…), without writing an addon.
+- **Addons and themes** — install game-system addons and themes; restyle a game with your own CSS (one accent colour for every highlight).
+- **Permissions** — per player and per item (maps, layers, tokens, cards…).
 
 ---
 
@@ -42,7 +54,7 @@ More technical details on how the application is put together — useful if you'
 Nordvik Manager is split across three repositories that talk to each other over WebRTC (game data) and Socket.IO (signaling only):
 
 - **[Frontend](https://github.com/haffff/NordvikManagerFrontEnd)** — React SPA (Vite). One codebase serves both the GM and Player roles.
-- **[Backend](https://github.com/haffff/NordvikManager-Backend)** ("GM Local Server") — .NET 8, Clean Architecture + CQRS. Runs on the GM's own machine and owns the actual game state (SQLite/PostgreSQL). It never listens for inbound connections directly from players — see below.
+- **[Backend](https://github.com/haffff/NordvikManager-Backend)** ("GM Local Server") — .NET 10, Clean Architecture + CQRS. Runs on the GM's own machine and owns the actual game state (SQLite by default, MySQL optional). It never listens for inbound connections directly from players — see below.
 - **[Central](https://github.com/haffff/NordvikManager-Central)** — Node.js/Express server, hosted centrally. Handles account auth (JWT) and relays WebRTC signaling between browsers and the GM's Backend. It never sees game data — it's a pure relay plus a session/user registry (SQLite).
 
 ```mermaid
@@ -58,8 +70,8 @@ flowchart LR
     end
 
     subgraph GMHost["GM's machine"]
-        Backend["Backend\n.NET 8, Clean Architecture + CQRS"]
-        BackendDB[("SQLite / PostgreSQL\ngame state")]
+        Backend["Backend\n.NET 10, Clean Architecture + CQRS"]
+        BackendDB[("SQLite / MySQL\ngame state")]
         Backend --- BackendDB
     end
 
