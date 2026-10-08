@@ -19,12 +19,14 @@ on:
 jobs:
   build_frontend:
     runs-on: ubuntu-latest
+    outputs:
+      protocol: ${{ steps.protocol.outputs.protocol }}
     steps:      
       - name: Checkout NordvikManager FrontEnd repository
         uses: actions/checkout@v4
         with:
           repository: haffff/NordvikManagerFrontend
-          ref: ${{ github.event.inputs.build_type == 'dev' && 'dev' || 'main' }}
+          ref: ${{ github.event.inputs.build_type == 'dev' && 'development' || 'main' }}
           path: frontend
       - name: Checkout NordvikManager Configuration
         uses: actions/checkout@v4
@@ -41,6 +43,15 @@ jobs:
       - name: get env file
         run: |
           mv config/releaseconfig/all_in_one/client/.env frontend/.env
+      - name: Read protocol version
+        id: protocol
+        run: |
+          PROTOCOL=$(jq -er '.protocol' frontend/src/protocol.json)
+          if ! [[ "$PROTOCOL" =~ ^[1-9][0-9]*$ ]]; then
+            echo "::error::frontend/src/protocol.json has an invalid protocol: $PROTOCOL"
+            exit 1
+          fi
+          echo "protocol=$PROTOCOL" >> "$GITHUB_OUTPUT"
       - name: Install dependencies
         run: |
           cd frontend
@@ -60,11 +71,34 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: front-build
-      - name: Deploy to FTP
-        uses: SamKirkland/FTP-Deploy-Action@4.0.0
+      # The same build is uploaded twice: as the latest client at /client/ and as the
+      # frozen client for its protocol at /client/p<N>/ (players are switched there when
+      # the GM's backend speaks protocol N). Two separate uploads with their own sync
+      # state: one combined upload would delete older p<N> folders it no longer sees.
+      # The /client/ upload never touches p<N>/ — the action only deletes files it uploaded itself.
+      - name: Deploy latest client to FTP (/client/)
+        uses: SamKirkland/FTP-Deploy-Action@v4.4.0
         with:
           server: ${{ secrets.FRONT_FTP_SERVER }}
           username: ${{ secrets.FRONT_FTP_USERNAME }}
           password: ${{ secrets.FRONT_FTP_PASSWORD }}
-          local-dir: .
-          server-dir: /client
+          local-dir: ./
+          server-dir: /client/
+          state-name: .ftp-deploy-client-latest.json
+          dangerous-clean-slate: false
+          exclude: |
+            **/.git*
+            **/.git*/**
+      - name: Deploy protocol client to FTP (/client/p${{ needs.build_frontend.outputs.protocol }}/)
+        uses: SamKirkland/FTP-Deploy-Action@v4.4.0
+        with:
+          server: ${{ secrets.FRONT_FTP_SERVER }}
+          username: ${{ secrets.FRONT_FTP_USERNAME }}
+          password: ${{ secrets.FRONT_FTP_PASSWORD }}
+          local-dir: ./
+          server-dir: /client/p${{ needs.build_frontend.outputs.protocol }}/
+          state-name: .ftp-deploy-client-protocol.json
+          dangerous-clean-slate: false
+          exclude: |
+            **/.git*
+            **/.git*/**
