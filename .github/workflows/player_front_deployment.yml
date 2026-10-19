@@ -57,12 +57,25 @@ jobs:
           cd frontend
           pnpm install
           pnpm run buildci_player
+          mv dist dist-player
+          cd ..
+      # The public demo: the same app on recorded data, no server (served at /client/demo/).
+      - name: Build demo
+        run: |
+          cd frontend
+          pnpm run buildci_demo
+          mv dist dist-demo
           cd ..
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: front-build
-          path: frontend/dist
+          path: frontend/dist-player
+      - name: Upload demo artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: demo-build
+          path: frontend/dist-demo
   deploy_frontend:
       runs-on: ubuntu-latest
       needs: [build_frontend]
@@ -71,6 +84,12 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: front-build
+          path: player
+      - name: Download demo artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: demo-build
+          path: demo
       # The same build is uploaded twice: as the latest client at /client/ and as the
       # frozen client for its protocol at /client/p<N>/ (players are switched there when
       # the GM's backend speaks protocol N). Two separate uploads with their own sync
@@ -82,7 +101,7 @@ jobs:
           server: ${{ secrets.FRONT_FTP_SERVER }}
           username: ${{ secrets.FRONT_FTP_USERNAME }}
           password: ${{ secrets.FRONT_FTP_PASSWORD }}
-          local-dir: ./
+          local-dir: ./player/
           server-dir: /client/
           state-name: .ftp-deploy-client-latest.json
           dangerous-clean-slate: false
@@ -95,9 +114,23 @@ jobs:
           server: ${{ secrets.FRONT_FTP_SERVER }}
           username: ${{ secrets.FRONT_FTP_USERNAME }}
           password: ${{ secrets.FRONT_FTP_PASSWORD }}
-          local-dir: ./
+          local-dir: ./player/
           server-dir: /client/p${{ needs.build_frontend.outputs.protocol }}/
           state-name: .ftp-deploy-client-protocol.json
+          dangerous-clean-slate: false
+          exclude: |
+            **/.git*
+            **/.git*/**
+      # The demo has its own folder and sync state; the /client/ upload above never touches it.
+      - name: Deploy demo to FTP (/client/demo/)
+        uses: SamKirkland/FTP-Deploy-Action@v4.4.0
+        with:
+          server: ${{ secrets.FRONT_FTP_SERVER }}
+          username: ${{ secrets.FRONT_FTP_USERNAME }}
+          password: ${{ secrets.FRONT_FTP_PASSWORD }}
+          local-dir: ./demo/
+          server-dir: /client/demo/
+          state-name: .ftp-deploy-client-demo.json
           dangerous-clean-slate: false
           exclude: |
             **/.git*
