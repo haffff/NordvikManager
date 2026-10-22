@@ -135,4 +135,4 @@ Copyright (C) 2025-2026 haffff. NordvikManager is licensed under the [GNU Affero
 
 My addons:
 
-[DND 5e repository (W.I.P.)](https://github.com/haffff/NordvikManager-DND)
+[DND 5e repository (W.I.P.)](https://github.com/haffff/NordvikManager-5E)
