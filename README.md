@@ -119,6 +119,10 @@ pnpm run dev            # runs Central, Backend, and the Frontend (both GM and P
 
 `pnpm run dev` is the fastest way to get the full stack running locally — it's `concurrently` wired to `pnpm --dir NordvikManager-Central run dev`, `pnpm --dir NordvikManagerFrontEnd run start_player`, `pnpm --dir NordvikManagerFrontEnd run start_gm`, and `dotnet run --project NordvikManager-Backend/DNDOnePlaceManager` — see `package.json` for the exact command. Each sub-repo's own README covers running it standalone (useful when you only need to iterate on one component).
 
+## License
+
+Copyright (C) 2025-2026 haffff. NordvikManager is licensed under the [GNU Affero General Public License v3](LICENSE) (`AGPL-3.0-only`), with an additional attribution term: see [NOTICE](NOTICE).
+
 ## See also
 
 [Nordvik Manager Frontend Repository](https://github.com/haffff/NordvikManagerFrontEnd)
