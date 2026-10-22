@@ -1,0 +1,29 @@
+NordvikManager
+Copyright (C) 2025-2026 haffff
+
+This program is free software: you can redistribute it and/or modify it under the terms of
+the GNU Affero General Public License as published by the Free Software Foundation, version 3
+only (SPDX: AGPL-3.0-only), with the additional terms below. The full license text is in LICENSE.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+See the GNU Affero General Public License for more details.
+
+If you run a modified version of this program for users over a network, section 13 of the
+license requires you to offer them its source code.
+
+Additional terms (section 7 of the GNU Affero General Public License v3)
+
+Under section 7(b), the following author attributions must be preserved:
+
+1. Attribution in the user interface. Any copy of this program, or of a work based on it, that
+   has an interactive user interface must keep showing, among its Appropriate Legal Notices,
+   the attribution "Powered by NordvikManager" with a link to https://nordvikmanager.pl,
+   together with the copyright notice above. In NordvikManager this is the About window
+   (the game list's "About" button and the in-game Game > About menu item). A modified version
+   may move it, but it must stay as easy for users to find, and it may add its own notices
+   next to it.
+2. This NOTICE file and the copyright notices in the source must be kept.
+
+Third-party components bundled with this program keep their own licenses, as stated next to
+them.
