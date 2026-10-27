@@ -37,7 +37,7 @@ jobs:
           repository: haffff/NordvikManager-Backend
           ref: ${{ github.event.inputs.build_type == 'dev' && 'development' || 'main' }}
           path: backend
-          sparse-checkout: DNDOnePlaceManager/WebRTC/ProtocolVersion.cs
+          sparse-checkout: NordvikManager/WebRTC/ProtocolVersion.cs
           sparse-checkout-cone-mode: false
       - name: Checkout Frontend protocol file
         uses: actions/checkout@v4
@@ -49,7 +49,7 @@ jobs:
           sparse-checkout-cone-mode: false
       - name: Compare protocol versions
         run: |
-          BACKEND=$(grep -oP 'const int Current\s*=\s*\K[0-9]+' backend/DNDOnePlaceManager/WebRTC/ProtocolVersion.cs)
+          BACKEND=$(grep -oP 'const int Current\s*=\s*\K[0-9]+' backend/NordvikManager/WebRTC/ProtocolVersion.cs)
           FRONTEND=$(jq -er '.protocol' frontend/src/protocol.json)
           echo "Backend protocol: $BACKEND, frontend protocol: $FRONTEND"
           if [ -z "$BACKEND" ] || [ "$BACKEND" != "$FRONTEND" ]; then
@@ -155,18 +155,23 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: front-build
-          path: backend/DNDOnePlaceManager/wwwroot
-      - name: Install dependencies
-        if: steps.check.outputs.skip == 'false'
-        run: dotnet restore backend/DNDOnePlaceManager.sln
+          path: backend/NordvikManager/wwwroot
+      # Only the server project (the solution would add the test projects). With a RID the csproj
+      # makes one self-contained single-file executable: the folder is NordvikManager(.exe),
+      # appsettings.json, README.txt, wwwroot/ and BuiltInAddons/. The version from version.json
+      # is what the server shows in its startup banner.
       - name: Build
         if: steps.check.outputs.skip == 'false'
-        run: dotnet publish backend/DNDOnePlaceManager.sln -c Release -o ./build_${{ matrix.name }} -r ${{ matrix.rid }} --self-contained
+        run: |
+          VERSION=$(jq -r '.CurrentVersion' config/version.json)
+          SUFFIX=""
+          if [ "${{ github.event.inputs.build_type }}" = "dev" ]; then
+            SUFFIX="dev.$(echo "${{ github.sha }}" | cut -c1-7)"
+          fi
+          dotnet publish backend/NordvikManager/NordvikManager.csproj -c Release -r ${{ matrix.rid }} -o ./build_${{ matrix.name }} -p:VersionPrefix=$VERSION -p:VersionSuffix=$SUFFIX
       - name: Move config files
         if: steps.check.outputs.skip == 'false'
-        run: |
-          cp -r config/releaseconfig/all_in_one/server/* ./build_${{ matrix.name }}/
-          rm ./build_${{ matrix.name }}/appsettings.Development.json
+        run: cp -r config/releaseconfig/all_in_one/server/* ./build_${{ matrix.name }}/
       - name: Upload artifacts
         if: steps.check.outputs.skip == 'false'
         uses: actions/upload-artifact@v4
@@ -205,6 +210,8 @@ jobs:
           run: |
             for dir in ./artifacts/build-*/; do
               target=$(basename "$dir" | sed 's/^build-//')
+              # Artifacts don't keep file modes: without this the Linux server isn't executable.
+              if [ -f "$dir/NordvikManager" ]; then chmod +x "$dir/NordvikManager"; fi
               (cd "$dir" && zip -r "../../NordvikManager_${{ env.CURRENT_VERSION }}_${target}.zip" *)
             done
         - uses: marvinpinto/action-automatic-releases@latest
