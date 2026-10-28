@@ -117,7 +117,7 @@ pnpm run install-all    # installs dependencies for every cloned repo — pnpm/n
 pnpm run dev            # runs Central, Backend, and the Frontend (both GM and Player mode) concurrently
 ```
 
-`pnpm run dev` is the fastest way to get the full stack running locally — it's `concurrently` wired to `pnpm --dir NordvikManager-Central run dev`, `pnpm --dir NordvikManagerFrontEnd run start_player`, `pnpm --dir NordvikManagerFrontEnd run start_gm`, and `dotnet run --project NordvikManager-Backend/DNDOnePlaceManager` — see `package.json` for the exact command. Each sub-repo's own README covers running it standalone (useful when you only need to iterate on one component).
+`pnpm run dev` is the fastest way to get the full stack running locally — it's `concurrently` wired to `pnpm --dir NordvikManager-Central run dev`, `pnpm --dir NordvikManagerFrontEnd run start_player`, `pnpm --dir NordvikManagerFrontEnd run start_gm`, and `dotnet run --project NordvikManager-Backend/NordvikManager` — see `package.json` for the exact command. Each sub-repo's own README covers running it standalone (useful when you only need to iterate on one component).
 
 ## License
 
