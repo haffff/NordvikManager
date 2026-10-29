@@ -3,6 +3,8 @@ name: Player Frontend Deployment Workflow
 on:
   workflow_dispatch:
     inputs:
+      # release: the main branch to /client/, /client/p<N>/ and the demo at /client/demo/.
+      # dev: the development branch to /client/dev/ only, leaving the live client alone.
       build_type:
         description: 'Build type'
         required: true
@@ -61,6 +63,7 @@ jobs:
           cd ..
       # The public demo: the same app on recorded data, no server (served at /client/demo/).
       - name: Build demo
+        if: github.event.inputs.build_type != 'dev'
         run: |
           cd frontend
           pnpm run buildci_demo
@@ -72,6 +75,7 @@ jobs:
           name: front-build
           path: frontend/dist-player
       - name: Upload demo artifacts
+        if: github.event.inputs.build_type != 'dev'
         uses: actions/upload-artifact@v4
         with:
           name: demo-build
@@ -86,6 +90,7 @@ jobs:
           name: front-build
           path: player
       - name: Download demo artifacts
+        if: github.event.inputs.build_type != 'dev'
         uses: actions/download-artifact@v4
         with:
           name: demo-build
@@ -96,6 +101,7 @@ jobs:
       # state: one combined upload would delete older p<N> folders it no longer sees.
       # The /client/ upload never touches p<N>/ — the action only deletes files it uploaded itself.
       - name: Deploy latest client to FTP (/client/)
+        if: github.event.inputs.build_type != 'dev'
         uses: SamKirkland/FTP-Deploy-Action@v4.4.0
         with:
           server: ${{ secrets.FRONT_FTP_SERVER }}
@@ -108,7 +114,10 @@ jobs:
           exclude: |
             **/.git*
             **/.git*/**
+      # Only release builds become a protocol's frozen client: a dev build may speak a protocol
+      # no released backend has yet.
       - name: Deploy protocol client to FTP (/client/p${{ needs.build_frontend.outputs.protocol }}/)
+        if: github.event.inputs.build_type != 'dev'
         uses: SamKirkland/FTP-Deploy-Action@v4.4.0
         with:
           server: ${{ secrets.FRONT_FTP_SERVER }}
@@ -123,6 +132,7 @@ jobs:
             **/.git*/**
       # The demo has its own folder and sync state; the /client/ upload above never touches it.
       - name: Deploy demo to FTP (/client/demo/)
+        if: github.event.inputs.build_type != 'dev'
         uses: SamKirkland/FTP-Deploy-Action@v4.4.0
         with:
           server: ${{ secrets.FRONT_FTP_SERVER }}
@@ -131,6 +141,22 @@ jobs:
           local-dir: ./demo/
           server-dir: /client/demo/
           state-name: .ftp-deploy-client-demo.json
+          dangerous-clean-slate: false
+          exclude: |
+            **/.git*
+            **/.git*/**
+      # Dev builds get their own folder and sync state. A GM backend on another protocol still
+      # switches players to the frozen /client/p<N>/ build, as from /client/.
+      - name: Deploy dev client to FTP (/client/dev/)
+        if: github.event.inputs.build_type == 'dev'
+        uses: SamKirkland/FTP-Deploy-Action@v4.4.0
+        with:
+          server: ${{ secrets.FRONT_FTP_SERVER }}
+          username: ${{ secrets.FRONT_FTP_USERNAME }}
+          password: ${{ secrets.FRONT_FTP_PASSWORD }}
+          local-dir: ./player/
+          server-dir: /client/dev/
+          state-name: .ftp-deploy-client-dev.json
           dangerous-clean-slate: false
           exclude: |
             **/.git*
