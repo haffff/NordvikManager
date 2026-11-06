@@ -1,9 +1,44 @@
 {
-    "CurrentVersion": "0.0.1",
+    "CurrentVersion": "0.0.2",
     "Changes": [
-        "Initial release with basic functionality."
+        "Mobile mode: a phone interface with full-screen panel tabs, a touch-friendly battle map and a small-screen lobby. Choose Auto/Desktop/Mobile per browser; the client can be installed as an app and run full screen.",
+        "Token editor: a new page at /client/tokens/ for building token files visually (parts, rules, visibility switches, sample values, live preview). Open it with \"Edit in token editor\" from Resources, cards and templates, and save straight back to the game.",
+        "Big files: resources download in pieces so chat and tokens keep flowing, music streams and can be seeked before it has fully loaded, and uploads over 2 MB go up in parts with progress and resume (up to 1 GB). Card API: Resources.Open and Resources.Upload.",
+        "Connection reliability: players and the GM server reconnect automatically after drops, with a heartbeat and token refresh, and open panels (chat, cards, battle map, properties, playback, turn order and more) catch up on what changed meanwhile without a reload. Fixes data that stopped refreshing until a reload, and requests lost on a player's first connection.",
+        "Upload limits: local admins can cap how much is uploaded into each game, as one total for the GMs and one per player (default 200 MB per player, 0 = no limit), in Application Settings > Server.",
+        "Security: bans now apply to the player client and disconnect a banned player right away. Only the owner and members can connect to a session, WebRTC answers are accepted only from the GM server, and new-resource notices go only to the uploader and the GMs.",
+        "Game owners can join their own game as GM from a player browser. Invite codes can be reusable or unlimited.",
+        "Central sessions stay in sync with the GM server: they are recreated when expired, keep the game password and are deleted with the game. Sessions unused for 90 days expire.",
+        "Addons: uninstall and enable/disable only affect the current game, progress toasts recover when the result is lost, and Install from URL was removed.",
+        "Fixed: elements made by the Add Element and Spawn Token action steps stayed invisible until the map was reloaded.",
+        "Fixed: popped-out windows (e.g. Dice) lost their styling in release builds.",
+        "Fixed: stacked token status icons, and a value at a range's minimum now gets that range's colour.",
+        "Fixed: the player client's protocol switch could loop or tell players to ask the GM to update when their own page was out of date. The update check no longer says \"latest version\" when the check failed.",
+        "Battle map canvas fills its panel without scrollbars, the Tools panel fits narrow columns, and the dock resizes with its container.",
+        "New crescent moon icon."
     ],
     "VersionHistory": [
+        {
+            "Version": "0.0.2",
+            "Date": "2026-11-06",
+            "Changes": [
+                "Mobile mode: a phone interface with full-screen panel tabs, a touch-friendly battle map and a small-screen lobby. Choose Auto/Desktop/Mobile per browser; the client can be installed as an app and run full screen.",
+                "Token editor: a new page at /client/tokens/ for building token files visually (parts, rules, visibility switches, sample values, live preview). Open it with \"Edit in token editor\" from Resources, cards and templates, and save straight back to the game.",
+                "Big files: resources download in pieces so chat and tokens keep flowing, music streams and can be seeked before it has fully loaded, and uploads over 2 MB go up in parts with progress and resume (up to 1 GB). Card API: Resources.Open and Resources.Upload.",
+                "Connection reliability: players and the GM server reconnect automatically after drops, with a heartbeat and token refresh, and open panels (chat, cards, battle map, properties, playback, turn order and more) catch up on what changed meanwhile without a reload. Fixes data that stopped refreshing until a reload, and requests lost on a player's first connection.",
+                "Upload limits: local admins can cap how much is uploaded into each game, as one total for the GMs and one per player (default 200 MB per player, 0 = no limit), in Application Settings > Server.",
+                "Security: bans now apply to the player client and disconnect a banned player right away. Only the owner and members can connect to a session, WebRTC answers are accepted only from the GM server, and new-resource notices go only to the uploader and the GMs.",
+                "Game owners can join their own game as GM from a player browser. Invite codes can be reusable or unlimited.",
+                "Central sessions stay in sync with the GM server: they are recreated when expired, keep the game password and are deleted with the game. Sessions unused for 90 days expire.",
+                "Addons: uninstall and enable/disable only affect the current game, progress toasts recover when the result is lost, and Install from URL was removed.",
+                "Fixed: elements made by the Add Element and Spawn Token action steps stayed invisible until the map was reloaded.",
+                "Fixed: popped-out windows (e.g. Dice) lost their styling in release builds.",
+                "Fixed: stacked token status icons, and a value at a range's minimum now gets that range's colour.",
+                "Fixed: the player client's protocol switch could loop or tell players to ask the GM to update when their own page was out of date. The update check no longer says \"latest version\" when the check failed.",
+                "Battle map canvas fills its panel without scrollbars, the Tools panel fits narrow columns, and the dock resizes with its container.",
+                "New crescent moon icon."
+            ]
+        },
         {
             "Version": "0.0.1",
             "Date": "2025-04-19",
