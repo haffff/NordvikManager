@@ -198,8 +198,16 @@ jobs:
                 CURRENT_VERSION="${CURRENT_VERSION}-dev.${SHORT_SHA}"
               fi
               echo "CURRENT_VERSION=$CURRENT_VERSION" >> $GITHUB_ENV
-              export LATEST_CHANGES=$(jq -r '.LatestChanges | join("\n - ")' config/version.json)
-              echo "Latest Changes: $LATEST_CHANGES"        
+              # Release notes: version.json's Changes as a list. The release action has no
+              # body input, so the notes are set on the release after it is made (below).
+              {
+                if [ "$BUILD_TYPE" = "dev" ]; then
+                  echo "Dev build of ${{ github.sha }}, a preview of $(jq -r '.CurrentVersion' config/version.json). Changes so far:"
+                  echo
+                fi
+                jq -r '.Changes[] | "- " + .' config/version.json
+              } > release-notes.md
+              cat release-notes.md
         - name: Download all build artifacts
           uses: actions/download-artifact@v4
           with:
@@ -221,3 +229,7 @@ jobs:
             prerelease: ${{ github.event.inputs.build_type == 'dev' }}
             title: "${{ github.event.inputs.build_type == 'dev' && 'Dev Build' || 'Release' }} ${{ env.CURRENT_VERSION }}"
             files: "NordvikManager_${{ env.CURRENT_VERSION }}_*.zip"
+        - name: Set release notes
+          env:
+            GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          run: gh release edit "v${{ env.CURRENT_VERSION }}" --repo "${{ github.repository }}" --notes-file release-notes.md
