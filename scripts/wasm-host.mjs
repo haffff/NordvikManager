@@ -111,6 +111,6 @@ ${withDev ? '' : `
   Central must allow the host page: CORS_ORIGIN=${playerOrigin},${hostOrigin} in its .env
   (pnpm dev:wasm sets it for the Central it starts).
 `}
-  Games are kept in the GM browser's IndexedDB ("nordvik-host"). Ctrl+C stops everything.
+  Games are kept in the GM browser's OPFS (one tab hosts at a time). Ctrl+C stops everything.
 `);
 });
