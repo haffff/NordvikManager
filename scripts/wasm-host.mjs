@@ -3,8 +3,9 @@
 // Backend). Builds it and serves its page.
 //
 //   pnpm wasm-host                 build + serve the host page on http://localhost:8098
-//   pnpm dev:wasm                  the same, plus Central (with CORS_ORIGIN covering the host page)
-//                                  and the player client: everything a local game needs
+//   pnpm dev:wasm                  the same, plus Central (with CORS_ORIGIN covering the host page),
+//                                  the player client, and the host build (the full GM app with this
+//                                  host in its tab, on :3005): everything a local game needs
 //
 // Options (after `--`, e.g. `pnpm dev:wasm -- --backend NordvikManager-Backend-wasm`):
 //   --backend <dir>   the Backend checkout to build from (default NordvikManager-Backend); it must
@@ -38,6 +39,10 @@ const artifacts = path.join(os.tmpdir(), 'nordvik-wasm-host');
 const bundle = path.join(artifacts, 'bin', 'NordvikManager.Wasm.Host', 'release_browser-wasm', 'AppBundle');
 const hostOrigin = `http://localhost:${port}`;
 const playerOrigin = 'http://localhost:3001';
+const hostUiOrigin = 'http://localhost:3005';
+// The host build needs a frontend with start_host and a bundle with host.js (Backend#75, FrontEnd#94).
+const frontendScripts = JSON.parse(readFileSync(path.join(root, 'NordvikManagerFrontEnd', 'package.json'), 'utf8')).scripts ?? {};
+const withHostUi = withDev && 'start_host' in frontendScripts;
 
 if (!existsSync(project)) {
     console.error(`✗ ${path.relative(root, project)} not found.`);
@@ -98,10 +103,15 @@ process.on('SIGTERM', stop);
 server.listen(port, () => {
     if (withDev) {
         // dotenv keeps variables already set, so this wins over Central's .env without editing it.
-        run('central', 'pnpm run dev', 'NordvikManager-Central', { CORS_ORIGIN: `${playerOrigin},${hostOrigin}` });
+        run('central', 'pnpm run dev', 'NordvikManager-Central', { CORS_ORIGIN: `${playerOrigin},${hostOrigin},${hostUiOrigin}` });
         run('player', 'pnpm run start_player', 'NordvikManagerFrontEnd');
+        if (withHostUi && existsSync(path.join(bundle, 'host.js')))
+            run('host-ui', 'pnpm run start_host', 'NordvikManagerFrontEnd', { NORDVIK_WASM_BUNDLE: bundle, REACT_APP_CENTRAL_URL: central });
     }
-    console.log(`
+    const hostUi = withHostUi && existsSync(path.join(bundle, 'host.js'));
+    console.log(`${hostUi ? `
+  Host build:     ${hostUiOrigin}/
+                  the full GM app with its game host in the tab: log in, create a game, enter it` : ''}
   GM host page:   ${hostOrigin}/?central=${encodeURIComponent(central)}
                   log in as the GM, create a game, Start session (keep the tab open)
   Player client:  ${playerOrigin}/?game=<the Central session id the GM page shows>

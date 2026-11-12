@@ -124,7 +124,8 @@ pnpm run dev            # runs Central, Backend, and the Frontend (both GM and P
 The Backend can also run in a browser tab (WebAssembly) instead of on the GM's PC. To try it locally:
 
 ```bash
-pnpm run dev:wasm       # builds the wasm host, serves it on http://localhost:8098, and starts Central + the player client
+pnpm run dev:wasm       # builds the wasm host, serves it on http://localhost:8098, and starts Central, the player client
+                        # and the host build (the full GM app with the host in its tab) on http://localhost:3005
 pnpm run wasm-host      # only builds and serves the host page (point it at a Central with --central <url>)
 ```
 
