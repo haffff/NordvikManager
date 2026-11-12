@@ -44,7 +44,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: haffff/NordvikManager-Backend
-          ref: ${{ inputs.backend_ref || 'wasm-host-report' }}
+          ref: ${{ inputs.backend_ref || 'wasm-host-pack' }}
           path: backend
       - name: Checkout NordvikManager Configuration
         uses: actions/checkout@v4
@@ -62,6 +62,8 @@ jobs:
         run: |
           dotnet build backend/NordvikManager.Wasm.Host/NordvikManager.Wasm.Host.csproj -c Release --artifacts-path "$ARTIFACTS"
           test -f "$BUNDLE/host.js" || { echo "::error::No host.js in $BUNDLE: the Backend ref has no host.js yet (Backend #75)"; exit 1; }
+          # Backend #79: the runtime's ~240 files in one pack (about 20 requests to start, not ~250).
+          if [ -f "$BUNDLE/_framework/runtime-pack.json" ]; then cat "$BUNDLE/_framework/runtime-pack.json"; echo; else echo "::warning::No runtime pack: the host will load ~250 files one by one (Backend #79)."; fi
 
       # The host in headless Chrome as it would host a game (worker, OPFS, WebRTC to an in-page
       # player, the shared REST endpoints): a bundle that fails it is never deployed.
