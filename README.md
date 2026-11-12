@@ -119,6 +119,18 @@ pnpm run dev            # runs Central, Backend, and the Frontend (both GM and P
 
 `pnpm run dev` is the fastest way to get the full stack running locally — it's `concurrently` wired to `pnpm --dir NordvikManager-Central run dev`, `pnpm --dir NordvikManagerFrontEnd run start_player`, `pnpm --dir NordvikManagerFrontEnd run start_gm`, and `dotnet run --project NordvikManager-Backend/NordvikManager` — see `package.json` for the exact command. Each sub-repo's own README covers running it standalone (useful when you only need to iterate on one component).
 
+### Browser-hosted GM (experimental)
+
+The Backend can also run in a browser tab (WebAssembly) instead of on the GM's PC. To try it locally:
+
+```bash
+pnpm run dev:wasm       # builds the wasm host, serves it on http://localhost:8098, and starts Central, the player client
+                        # and the host build (the full GM app with the host in its tab) on http://localhost:3005
+pnpm run wasm-host      # only builds and serves the host page (point it at a Central with --central <url>)
+```
+
+Options: `--backend <dir>` (the Backend checkout to build from, default `NordvikManager-Backend`), `--port <n>`, `--central <url>`, `--no-build`. The build needs the wasm-tools workload (`dotnet workload install wasm-tools`) and goes to the OS temp folder. `dev:wasm` starts Central with `CORS_ORIGIN` covering the host page; with `wasm-host` alone, add `http://localhost:8098` to Central's `CORS_ORIGIN` yourself. The script prints the host page, player client and self-check URLs.
+
 ## License
 
 Copyright (C) 2025-2026 haffff. NordvikManager is licensed under the [GNU Affero General Public License v3](LICENSE) (`AGPL-3.0-only`), with an additional attribution term: see [NOTICE](NOTICE).
