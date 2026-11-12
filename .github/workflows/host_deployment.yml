@@ -128,13 +128,20 @@ jobs:
           if [ -z "$CENTRAL" ]; then echo "::error::No REACT_APP_CENTRAL_URL in the client .env"; exit 1; fi
           # A browser user agent: the host in front of Central answers bare curl with 429.
           UA='Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36'
+          echo "CENTRAL=$CENTRAL" >> "$GITHUB_ENV"
+          echo "UA=$UA" >> "$GITHUB_ENV"
 
-          # Central#44: /client/host/ may compile WebAssembly, or the host stops at start.
+          # Central#44: /client/host/ may compile WebAssembly, or the host stops at start. Only an
+          # existing page shows it: Express's own 404 page sends "default-src 'none'" instead, so on
+          # the first deploy it's checked after the upload (below).
+          PAGE=$(curl -s -o /dev/null -w '%{http_code}' -A "$UA" "$CENTRAL/client/host/")
           CSP=$(curl -sI -A "$UA" "$CENTRAL/client/host/" | grep -i '^content-security-policy:' || true)
-          if [ -z "$CSP" ]; then
+          if [ "$PAGE" = "404" ]; then
+            echo "No /client/host/ yet (the first deploy): its CSP is checked after the upload."
+          elif [ -z "$CSP" ]; then
             echo "::warning::$CENTRAL/client/host/ sends no CSP: something other than Central answers it, so check .wasm is served as application/wasm."
           elif ! grep -q "wasm-unsafe-eval" <<< "$CSP"; then
-            echo "::error::$CENTRAL serves /client/host/ without 'wasm-unsafe-eval' in its CSP: deploy Central with #44 first."
+            echo "::error::$CENTRAL serves /client/host/ without 'wasm-unsafe-eval' in its CSP: deploy Central with #44 (and restart it) first."
             exit 1
           fi
 
@@ -149,7 +156,7 @@ jobs:
           if [ "$STATUS" != "401" ]; then
             echo "::warning::$CENTRAL/api/addons/<key>/package answered $STATUS (401 expected): installing registry addons from the host won't work until Central has #45."
           fi
-          echo "Central $CENTRAL: CSP ok, /client/p$PROTOCOL/ there, addon packages $STATUS"
+          echo "Central $CENTRAL: /client/host/ $PAGE, /client/p$PROTOCOL/ there, addon packages $STATUS"
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
@@ -170,3 +177,20 @@ jobs:
           exclude: |
             **/.git*
             **/.git*/**
+      # The page as players' browsers will get it: Central's CSP lets it compile WebAssembly, the
+      # runtime is served as application/wasm, and the pack is there.
+      - name: Check the deployed host
+        run: |
+          PAGE=$(curl -s -o /dev/null -w '%{http_code}' -A "$UA" "$CENTRAL/client/host/")
+          CSP=$(curl -sI -A "$UA" "$CENTRAL/client/host/" | grep -i '^content-security-policy:' || true)
+          WASM=$(curl -sI -A "$UA" "$CENTRAL/client/host/wasm/_framework/dotnet.native.wasm" | grep -i '^content-type:' || true)
+          PACK=$(curl -s -A "$UA" "$CENTRAL/client/host/wasm/_framework/runtime-pack.json" || true)
+          echo "/client/host/: $PAGE; $CSP; dotnet.native.wasm: $WASM; pack: $PACK"
+          if [ "$PAGE" != "200" ]; then echo "::error::$CENTRAL/client/host/ answers $PAGE after the upload."; exit 1; fi
+          if [ -n "$CSP" ] && ! grep -q "wasm-unsafe-eval" <<< "$CSP"; then
+            echo "::error::$CENTRAL/client/host/ is up, but its CSP has no 'wasm-unsafe-eval': the host can't start until Central has #44 (restart it from the hosting panel)."
+            exit 1
+          fi
+          if ! grep -qi "application/wasm" <<< "$WASM"; then
+            echo "::warning::.wasm isn't served as application/wasm ($WASM): only the fallback (no runtime pack) loads it from there, and it would start more slowly or not at all."
+          fi
