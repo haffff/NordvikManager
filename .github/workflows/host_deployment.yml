@@ -1,0 +1,170 @@
+name: Host Build Deployment Workflow
+
+# The host build: the GM app with the game host running in the GM's own browser tab (the
+# frontend's host mode, pnpm run buildci_host, with the Backend's browser-wasm host,
+# NordvikManager.Wasm.Host, inside it at wasm/). Served by Central at /client/host/, which needs
+# Central's CSP for that path ('wasm-unsafe-eval') and, for addons, its /api/addons/:key/package.
+#
+# A pull request that changes this file builds and self-checks it (no upload); the upload to
+# /client/host/ is only ever run by hand.
+
+on:
+  workflow_dispatch:
+    inputs:
+      frontend_ref:
+        description: 'Frontend branch, tag or commit (it needs the host mode: development once FrontEnd #94/#95 are merged)'
+        required: true
+        default: 'development'
+        type: string
+      backend_ref:
+        description: 'Backend branch, tag or commit (it needs NordvikManager.Wasm.Host with host.js: development once Backend #74-#78 are merged)'
+        required: true
+        default: 'development'
+        type: string
+  pull_request:
+    paths:
+      - '.github/workflows/host_deployment.yml'
+
+jobs:
+  build_host:
+    runs-on: ubuntu-latest
+    outputs:
+      protocol: ${{ steps.protocol.outputs.protocol }}
+    env:
+      ARTIFACTS: ${{ github.workspace }}/wasm-artifacts
+      BUNDLE: ${{ github.workspace }}/wasm-artifacts/bin/NordvikManager.Wasm.Host/release_browser-wasm/AppBundle
+    steps:
+      - name: Checkout NordvikManager FrontEnd repository
+        uses: actions/checkout@v4
+        with:
+          repository: haffff/NordvikManagerFrontend
+          ref: ${{ inputs.frontend_ref || 'host-logs' }}
+          path: frontend
+      - name: Checkout NordvikManager Backend repository
+        uses: actions/checkout@v4
+        with:
+          repository: haffff/NordvikManager-Backend
+          ref: ${{ inputs.backend_ref || 'wasm-host-report' }}
+          path: backend
+      - name: Checkout NordvikManager Configuration
+        uses: actions/checkout@v4
+        with:
+          path: config
+
+      # The browser-wasm host: .NET 10 with the wasm-tools workload (it links SQLite into the runtime).
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Install the wasm-tools workload
+        run: dotnet workload install wasm-tools
+      - name: Build the browser host
+        run: |
+          dotnet build backend/NordvikManager.Wasm.Host/NordvikManager.Wasm.Host.csproj -c Release --artifacts-path "$ARTIFACTS"
+          test -f "$BUNDLE/host.js" || { echo "::error::No host.js in $BUNDLE: the Backend ref has no host.js yet (Backend #75)"; exit 1; }
+
+      # The host in headless Chrome as it would host a game (worker, OPFS, WebRTC to an in-page
+      # player, the shared REST endpoints): a bundle that fails it is never deployed.
+      - name: Self-check the browser host
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+        run: |
+          mkdir -p "$RUNNER_TEMP/pw" && cd "$RUNNER_TEMP/pw" && npm init -y >/dev/null && npm install --no-save --no-audit --no-fund playwright >/dev/null
+          cd "$GITHUB_WORKSPACE"
+          CHROME_PATH="$(command -v google-chrome)" node backend/NordvikManager.Wasm.Host/selfcheck.cjs "$BUNDLE" "$RUNNER_TEMP/pw/node_modules/playwright"
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: '10.7.0'
+      # The player client's settings: REACT_APP_CENTRAL_URL must be the site that serves /client/
+      # (the host's page may only connect to its own origin).
+      - name: get env file
+        run: |
+          cp config/releaseconfig/all_in_one/client/.env frontend/.env
+      - name: Read protocol version
+        id: protocol
+        run: |
+          PROTOCOL=$(jq -er '.protocol' frontend/src/protocol.json)
+          if ! [[ "$PROTOCOL" =~ ^[1-9][0-9]*$ ]]; then
+            echo "::error::frontend/src/protocol.json has an invalid protocol: $PROTOCOL"
+            exit 1
+          fi
+          echo "protocol=$PROTOCOL" >> "$GITHUB_OUTPUT"
+      - name: Build the host build
+        run: |
+          cd frontend
+          pnpm install
+          NORDVIK_WASM_BUNDLE="$BUNDLE" pnpm run buildci_host
+          test -f dist/wasm/host.js || { echo "::error::The build has no wasm/host.js"; exit 1; }
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: host-build
+          path: frontend/dist
+
+  deploy_host:
+    runs-on: ubuntu-latest
+    needs: [build_host]
+    if: github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Checkout NordvikManager Configuration
+        uses: actions/checkout@v4
+        with:
+          path: config
+      # What the host needs from the live site, checked before anything is uploaded.
+      - name: Check the live Central
+        env:
+          PROTOCOL: ${{ needs.build_host.outputs.protocol }}
+        run: |
+          CENTRAL=$(grep -E '^\s*REACT_APP_CENTRAL_URL\s*=' config/releaseconfig/all_in_one/client/.env | head -1 \
+            | sed -E 's/^[^=]*=\s*//; s/^["'\'']//; s/["'\'']\s*$//; s:/+$::')
+          if [ -z "$CENTRAL" ]; then echo "::error::No REACT_APP_CENTRAL_URL in the client .env"; exit 1; fi
+          # A browser user agent: the host in front of Central answers bare curl with 429.
+          UA='Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36'
+
+          # Central#44: /client/host/ may compile WebAssembly, or the host stops at start.
+          CSP=$(curl -sI -A "$UA" "$CENTRAL/client/host/" | grep -i '^content-security-policy:' || true)
+          if [ -z "$CSP" ]; then
+            echo "::warning::$CENTRAL/client/host/ sends no CSP: something other than Central answers it, so check .wasm is served as application/wasm."
+          elif ! grep -q "wasm-unsafe-eval" <<< "$CSP"; then
+            echo "::error::$CENTRAL serves /client/host/ without 'wasm-unsafe-eval' in its CSP: deploy Central with #44 first."
+            exit 1
+          fi
+
+          # Players joining the host are switched to the player build for its protocol.
+          if ! curl -fsI -A "$UA" "$CENTRAL/client/p$PROTOCOL/index.html" >/dev/null; then
+            echo "::error::$CENTRAL/client/p$PROTOCOL/ isn't there: players couldn't join a host on protocol $PROTOCOL. Deploy a release player client for it first."
+            exit 1
+          fi
+
+          # Central#45: addons for the host are downloaded through Central (401 = the route is there).
+          STATUS=$(curl -s -o /dev/null -w '%{http_code}' -A "$UA" "$CENTRAL/api/addons/poll/package")
+          if [ "$STATUS" != "401" ]; then
+            echo "::warning::$CENTRAL/api/addons/<key>/package answered $STATUS (401 expected): installing registry addons from the host won't work until Central has #45."
+          fi
+          echo "Central $CENTRAL: CSP ok, /client/p$PROTOCOL/ there, addon packages $STATUS"
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: host-build
+          path: host
+      # Its own folder and sync state: the player client's uploads to /client/ never touch it,
+      # and this one only deletes files it uploaded itself.
+      - name: Deploy host build to FTP (/client/host/)
+        uses: SamKirkland/FTP-Deploy-Action@v4.4.0
+        with:
+          server: ${{ secrets.FRONT_FTP_SERVER }}
+          username: ${{ secrets.FRONT_FTP_USERNAME }}
+          password: ${{ secrets.FRONT_FTP_PASSWORD }}
+          local-dir: ./host/
+          server-dir: /client/host/
+          state-name: .ftp-deploy-client-host.json
+          dangerous-clean-slate: false
+          exclude: |
+            **/.git*
+            **/.git*/**
