@@ -1,23 +1,34 @@
 {
-    "CurrentVersion": "0.0.2",
+    "CurrentVersion": "0.0.3",
     "Changes": [
-        "Mobile mode: a phone interface with full-screen panel tabs, a touch-friendly battle map and a small-screen lobby. Choose Auto/Desktop/Mobile per browser; the client can be installed as an app and run full screen.",
-        "Token editor: a new page at /client/tokens/ for building token files visually (parts, rules, visibility switches, sample values, live preview). Open it with \"Edit in token editor\" from Resources, cards and templates, and save straight back to the game.",
-        "Big files: resources download in pieces so chat and tokens keep flowing, music streams and can be seeked before it has fully loaded, and uploads over 2 MB go up in parts with progress and resume (up to 1 GB). Card API: Resources.Open and Resources.Upload.",
-        "Connection reliability: players and the GM server reconnect automatically after drops, with a heartbeat and token refresh, and open panels (chat, cards, battle map, properties, playback, turn order and more) catch up on what changed meanwhile without a reload. Fixes data that stopped refreshing until a reload, and requests lost on a player's first connection.",
-        "Upload limits: local admins can cap how much is uploaded into each game, as one total for the GMs and one per player (default 200 MB per player, 0 = no limit), in Application Settings > Server.",
-        "Security: bans now apply to the player client and disconnect a banned player right away. Only the owner and members can connect to a session, WebRTC answers are accepted only from the GM server, and new-resource notices go only to the uploader and the GMs.",
-        "Game owners can join their own game as GM from a player browser. Invite codes can be reusable or unlimited.",
-        "Central sessions stay in sync with the GM server: they are recreated when expired, keep the game password and are deleted with the game. Sessions unused for 90 days expire.",
-        "Addons: uninstall and enable/disable only affect the current game, progress toasts recover when the result is lost, and Install from URL was removed.",
-        "Fixed: elements made by the Add Element and Spawn Token action steps stayed invisible until the map was reloaded.",
-        "Fixed: popped-out windows (e.g. Dice) lost their styling in release builds.",
-        "Fixed: stacked token status icons, and a value at a range's minimum now gets that range's colour.",
-        "Fixed: the player client's protocol switch could loop or tell players to ask the GM to update when their own page was out of date. The update check no longer says \"latest version\" when the check failed.",
-        "Battle map canvas fills its panel without scrollbars, the Tools panel fits narrow columns, and the dock resizes with its container.",
-        "New crescent moon icon."
+        "Browser version: host a game straight from a browser tab at /client/host/, with no download. The GM server runs in the tab, keeps games in the browser's storage across reloads and installs addons from Central's registry. The Host button shows storage, the log and what the browser version can't do; the local server is still needed for backups, linked folders and services on your computer.",
+        "Addon network: addons say which sites their actions and cards may reach, and everything else is refused. GMs are told once what was blocked and why, the Addons panel shows each addon's connections and what was blocked, and cards get a CardAPI Host group (GetInfo, IsBrowser, HasLimitation, IsAvailable). On the browser version, actions reach https sites that allow browser requests.",
+        "Cards can no longer show other sites in frames (frame-src 'none'): embedded videos or pages in card code stop working.",
+        "Action permissions: players need Execute on an action to run it (no value means blocked), and game editors can always run them. Addons can be disabled per game: their hooks, actions and panels stop, their templates stay. Update your addons so their player actions keep working.",
+        "Addon dependencies: an addon can need other addons. They are resolved before anything changes and installed with it, and the Addons panel shows what an addon needs and what needs it.",
+        "Imports: exports are signed, and importing card code from another server asks first. Imports show progress, actions can be imported from a file, and cards relink to their template by key on import and addon update.",
+        "Battle map: Ctrl/Cmd/Shift + click adds to or takes out of the selection, Ctrl/Shift + drag adds an area, Ctrl+A selects all, and a modified drag still moves the selection. Copy and paste keeps the whole element, its properties and its place in the layer. A popped-out battle map works fully: drawing, menus and overlays use its own window.",
+        "Card API: RunClientCommand runs only the supported commands (and logs a failing one instead of breaking the card), and cards can follow the map's selection.",
+        "Security: updated WebRTC library for two denial-of-service advisories, cross-site requests with the login cookie are refused, chunked messages have size limits (a stalled one is dropped first), a damaged admin file no longer makes everyone local admin, and one chain of actions is limited to 32 levels and 10,000 runs.",
+        "Fixed: chat showed no sender names when it opened while the game was still loading; joins and leaves could break a broadcast; failed imports left their upload behind."
     ],
     "VersionHistory": [
+        {
+            "Version": "0.0.3",
+            "Date": "2026-11-18",
+            "Changes": [
+                "Browser version: host a game straight from a browser tab at /client/host/, with no download. The GM server runs in the tab, keeps games in the browser's storage across reloads and installs addons from Central's registry. The Host button shows storage, the log and what the browser version can't do; the local server is still needed for backups, linked folders and services on your computer.",
+                "Addon network: addons say which sites their actions and cards may reach, and everything else is refused. GMs are told once what was blocked and why, the Addons panel shows each addon's connections and what was blocked, and cards get a CardAPI Host group (GetInfo, IsBrowser, HasLimitation, IsAvailable). On the browser version, actions reach https sites that allow browser requests.",
+                "Cards can no longer show other sites in frames (frame-src 'none'): embedded videos or pages in card code stop working.",
+                "Action permissions: players need Execute on an action to run it (no value means blocked), and game editors can always run them. Addons can be disabled per game: their hooks, actions and panels stop, their templates stay. Update your addons so their player actions keep working.",
+                "Addon dependencies: an addon can need other addons. They are resolved before anything changes and installed with it, and the Addons panel shows what an addon needs and what needs it.",
+                "Imports: exports are signed, and importing card code from another server asks first. Imports show progress, actions can be imported from a file, and cards relink to their template by key on import and addon update.",
+                "Battle map: Ctrl/Cmd/Shift + click adds to or takes out of the selection, Ctrl/Shift + drag adds an area, Ctrl+A selects all, and a modified drag still moves the selection. Copy and paste keeps the whole element, its properties and its place in the layer. A popped-out battle map works fully: drawing, menus and overlays use its own window.",
+                "Card API: RunClientCommand runs only the supported commands (and logs a failing one instead of breaking the card), and cards can follow the map's selection.",
+                "Security: updated WebRTC library for two denial-of-service advisories, cross-site requests with the login cookie are refused, chunked messages have size limits (a stalled one is dropped first), a damaged admin file no longer makes everyone local admin, and one chain of actions is limited to 32 levels and 10,000 runs.",
+                "Fixed: chat showed no sender names when it opened while the game was still loading; joins and leaves could break a broadcast; failed imports left their upload behind."
+            ]
+        },
         {
             "Version": "0.0.2",
             "Date": "2026-11-06",
