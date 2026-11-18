@@ -37,7 +37,7 @@ jobs:
           repository: haffff/NordvikManager-Backend
           ref: ${{ github.event.inputs.build_type == 'dev' && 'development' || 'main' }}
           path: backend
-          sparse-checkout: NordvikManager/WebRTC/ProtocolVersion.cs
+          sparse-checkout: NordvikManager.RealTime/WebRTC/ProtocolVersion.cs
           sparse-checkout-cone-mode: false
       - name: Checkout Frontend protocol file
         uses: actions/checkout@v4
@@ -49,7 +49,7 @@ jobs:
           sparse-checkout-cone-mode: false
       - name: Compare protocol versions
         run: |
-          BACKEND=$(grep -oP 'const int Current\s*=\s*\K[0-9]+' backend/NordvikManager/WebRTC/ProtocolVersion.cs)
+          BACKEND=$(grep -oP 'const int Current\s*=\s*\K[0-9]+' backend/NordvikManager.RealTime/WebRTC/ProtocolVersion.cs)
           FRONTEND=$(jq -er '.protocol' frontend/src/protocol.json)
           echo "Backend protocol: $BACKEND, frontend protocol: $FRONTEND"
           if [ -z "$BACKEND" ] || [ "$BACKEND" != "$FRONTEND" ]; then
